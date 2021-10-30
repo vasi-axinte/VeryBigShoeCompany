@@ -1,5 +1,4 @@
-﻿@page "/fileupload"
-@inject HttpClient Http
+﻿@inject HttpClient Http
 @using System.IO
 @using VeryBigShoesCompany.Shared
 
@@ -14,6 +13,7 @@
 </form>
 
 @code {
+    [Parameter] public EventCallback<bool> OnUploadComplete { get; set; }
     string Message = "No file(s) selected";
     IReadOnlyList<IBrowserFile> selectedFiles;
 
@@ -39,6 +39,8 @@
             ms.Close();
 
             await Http.PostAsJsonAsync<UploadedFile>("/api/orders", uploadedFile);
+
+            await OnUploadComplete.InvokeAsync();
         }
 
         Message = $"{selectedFiles.Count} file(s) uploaded on server";

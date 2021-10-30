@@ -5,6 +5,8 @@
 
 <h3>OrdersView</h3>
 
+<FileUpload OnUploadComplete="UploadCompleteHandlerAsync"></FileUpload>
+
 @if (isLoaded)
 {
     @if (orders.Count == 0)
@@ -52,10 +54,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadDataAsync();
+    }
+
+    async Task UploadCompleteHandlerAsync()
+    {
+        await ReloadDataAsync();
+    }
+
+    private async Task ReloadDataAsync()
+    {
         orders = await Http.GetFromJsonAsync<List<Order>>("/api/orders");
 
         isLoaded = true;
-
-        this.StateHasChanged();
     }
 }
