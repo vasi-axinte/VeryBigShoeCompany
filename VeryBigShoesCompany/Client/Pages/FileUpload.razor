@@ -38,8 +38,9 @@
             uploadedFile.FileContent = ms.ToArray();
             ms.Close();
 
-            await Http.PostAsJsonAsync<UploadedFile>("/api/fileupload", uploadedFile);
+            await Http.PostAsJsonAsync<UploadedFile>("/api/orders", uploadedFile);
         }
+
         Message = $"{selectedFiles.Count} file(s) uploaded on server";
         this.StateHasChanged();
     }

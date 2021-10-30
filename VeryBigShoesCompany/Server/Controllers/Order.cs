@@ -13,16 +13,16 @@ namespace VeryBigShoesCompany.Server.Controllers
         public string CustomerEmail { get; set; }
         
         [XmlAttribute(nameof(Quantity))]
-        public string Quantity { get; set; }
+        public short Quantity { get; set; }
         
         [XmlAttribute(nameof(Notes))]
         public string Notes { get; set; }
         
         [XmlAttribute(nameof(Size))]
-        public string Size { get; set; }
+        public float Size { get; set; }
         
         [XmlAttribute(nameof(DateRequired))]
-        public string DateRequired { get; set; }
+        public DateTime DateRequired { get; set; }
     }
 
     [Serializable]
