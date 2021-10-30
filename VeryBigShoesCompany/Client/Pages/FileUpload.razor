@@ -2,14 +2,12 @@
 @using System.IO
 @using VeryBigShoesCompany.Shared
 
-<h1>Blazor WebAssembly File Upload</h1>
-
 <h3>@Message</h3>
 
 <form @onsubmit="OnSubmit">
     <InputFile OnChange="OnInputFileChange" multiple />
-    <br /><br />
     <button type="submit">Upload Selected File(s)</button>
+    <hr /> <hr />
 </form>
 
 @code {
