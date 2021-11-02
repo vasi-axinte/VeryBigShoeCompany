@@ -1,5 +1,6 @@
 ﻿@inject HttpClient Http
 @using System.IO
+@using System.Net
 @using VeryBigShoesCompany.Shared
 
 <h3>@Message</h3>
@@ -7,12 +8,18 @@
 <form @onsubmit="OnSubmit">
     <InputFile OnChange="OnInputFileChange" multiple />
     <button type="submit">Upload Selected File(s)</button>
-    <hr /> <hr />
+    <hr />
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <span>@ErrorMessage</span>
+    }
+    <hr />
 </form>
 
 @code {
     [Parameter] public EventCallback<bool> OnUploadComplete { get; set; }
     string Message = "No file(s) selected";
+    string ErrorMessage = string.Empty;
     IReadOnlyList<IBrowserFile> selectedFiles;
 
     private void OnInputFileChange(InputFileChangeEventArgs e)
@@ -22,8 +29,9 @@
         this.StateHasChanged();
     }
 
-    private async void OnSubmit()
+    private async Task OnSubmit()
     {
+        ErrorMessage = string.Empty;
         foreach (var file in selectedFiles)
         {
             Stream stream = file.OpenReadStream();
@@ -36,12 +44,23 @@
             uploadedFile.FileContent = ms.ToArray();
             ms.Close();
 
-            await Http.PostAsJsonAsync<UploadedFile>("/api/orders", uploadedFile);
+            try
+            {
+                var result = await Http.PostAsJsonAsync<UploadedFile>("/api/orders", uploadedFile);
+                if (result.StatusCode == HttpStatusCode.UnprocessableEntity)
+                {
+                    ErrorMessage = await result.Content.ReadAsStringAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
 
             await OnUploadComplete.InvokeAsync();
         }
 
         Message = $"{selectedFiles.Count} file(s) uploaded on server";
-        this.StateHasChanged();
+        StateHasChanged();
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using VeryBigShoesCompany.Server.Repositories;
+using VeryBigShoesCompany.Server.Services;
 
 namespace VeryBigShoesCompany.Server
 {
@@ -27,6 +28,7 @@ namespace VeryBigShoesCompany.Server
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddSingleton<InMemoryOrdersRepository>();
+            services.AddScoped<OrdersService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

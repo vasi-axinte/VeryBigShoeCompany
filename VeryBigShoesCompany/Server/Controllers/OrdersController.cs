@@ -1,16 +1,14 @@
 ﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using VeryBigShoesCompany.Server.Repositories;
+using VeryBigShoesCompany.Server.Services;
 using VeryBigShoesCompany.Shared;
 
 namespace VeryBigShoesCompany.Server.Controllers
@@ -19,39 +17,59 @@ namespace VeryBigShoesCompany.Server.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        public OrdersController(IWebHostEnvironment environment, InMemoryOrdersRepository repository)
+        public OrdersController(IWebHostEnvironment environment, OrdersService ordersService)
         {
             Environment = environment;
-            Repository = repository;
+            OrdersService = ordersService;
         }
 
         private  IWebHostEnvironment Environment { get; }
 
-        private InMemoryOrdersRepository Repository { get; }
+        private OrdersService OrdersService { get; }
 
         [HttpGet]
         public IEnumerable<Shared.Order> Get()
         {
-            return Repository.Orders.ToArray();
+            return OrdersService.GetOrders();
         }
 
         [HttpPost]
-        public void Post(UploadedFile uploadedFile)
+        public IActionResult Post(UploadedFile uploadedFile)
         {
-            var path = $"{Environment.WebRootPath}\\{uploadedFile.FileName}";
-
             var memoryStream = new MemoryStream(uploadedFile.FileContent);
-            XmlReader xmlReader = XmlReader.Create(memoryStream);
-            XDocument doc = XDocument.Load(xmlReader);
+            var xmlReader = XmlReader.Create(memoryStream);
+            var doc = XDocument.Load(xmlReader);
 
-            ValidateXml(doc);
+            try
+            {
+                ValidateXml(doc);
+            }
+            catch (Exception ex)
+            {
+                return new UnprocessableEntityObjectResult(ex.Message);
+            }
 
+            var orders = GetOrdersFromXml(doc);
+
+            try
+            {
+                OrdersService.AddOrders(orders);
+
+                return new OkResult();
+            }
+            catch (Exception ex)
+            {
+                return new UnprocessableEntityObjectResult(ex.Message);
+            }
+        }
+
+        private List<Shared.Order> GetOrdersFromXml(XDocument doc)
+        {
             BigShoeDataImport data = null;
-            XmlSerializer serializer = new XmlSerializer(typeof(BigShoeDataImport));
+            var serializer = new XmlSerializer(typeof(BigShoeDataImport));
 
             data = (BigShoeDataImport)serializer.Deserialize(doc.Root.CreateReader());
-
-            Repository.Orders.AddRange(data.Orders.Select(d => new Shared.Order
+            return data.Orders.Select(d => new Shared.Order
             {
                 CustomerName = d.CustomerName,
                 CustomerEmail = d.CustomerEmail,
@@ -59,7 +77,7 @@ namespace VeryBigShoesCompany.Server.Controllers
                 Notes = d.Notes,
                 Size = d.Size,
                 DateRequired = d.DateRequired,
-            }).ToList());
+            }).ToList();
         }
 
         void ValidateXml(XDocument doc)
