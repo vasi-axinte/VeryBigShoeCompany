@@ -82,12 +82,12 @@ namespace VeryBigShoesCompany.Server.Services
 
         private bool IsDateValid(Order order, out string error)
         {
-            if ((order.DateRequired - DateTime.Now).Days >= 11)
+            if (GetBusinessDays(DateTime.Now, order.DateRequired) >= 10)
             {
                 error = null;
                 return true;
             }
-            error = $"Date {order.DateRequired.ToShortDateString()} is invalid. It must be at least 10 days later than today";
+            error = $"Date {order.DateRequired.ToShortDateString()} is invalid. It must be at least 10 business days later than today";
             return false;
         }
 
@@ -124,6 +124,26 @@ namespace VeryBigShoesCompany.Server.Services
             }
             error = $"Quantity {order.Quantity} invalid. Must be a multiple of 1000";
             return false;
+        }
+
+        /// <summary>
+        /// Gets the number of business days between two dates
+        /// Original Source: https://alecpojidaev.wordpress.com/2009/10/29/work-days-calculation-with-c/
+        /// This can be easily extracted to some DateTimeExtension so that it can be further used in other validations
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public double GetBusinessDays(DateTime startDate, DateTime endDate)
+        {
+            double numberOfBusinessDays =
+                1 + ((endDate - startDate).TotalDays * 5 -
+                     (startDate.DayOfWeek - endDate.DayOfWeek) * 2) / 7;
+
+            if (endDate.DayOfWeek == DayOfWeek.Saturday) numberOfBusinessDays--;
+            if (startDate.DayOfWeek == DayOfWeek.Sunday) numberOfBusinessDays--;
+
+            return numberOfBusinessDays;
         }
     }
 }
